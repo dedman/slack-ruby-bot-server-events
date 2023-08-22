@@ -5,7 +5,7 @@ module SlackRubyBotServer
     module Api
       module Endpoints
         module Slack
-          class ActionsEndpoint < Grape::API
+          class ActionsEndpoint
             desc 'Respond to interactive slack buttons and actions.'
             params do
               requires :payload, type: JSON do
@@ -27,6 +27,9 @@ module SlackRubyBotServer
                     requires :id, type: String
                     optional :domain, type: String
                   end
+                  optional :view, type: Hash do
+                    requires :callback_id, type: String
+                  end
                   optional :actions, type: Array do
                     requires :value, type: String
                   end
@@ -35,6 +38,13 @@ module SlackRubyBotServer
                     optional :user, type: String
                     requires :ts, type: String
                     requires :text, type: String
+                  end
+                end
+                given type: ->(val) { val == 'view_submission' } do
+                  requires :token, type: String
+                  optional :trigger_id, type: String
+                  requires :view, type: Hash do
+                    requires :callback_id, type: String
                   end
                 end
 
@@ -72,7 +82,7 @@ module SlackRubyBotServer
             post '/action' do
               action = SlackRubyBotServer::Events::Requests::Action.new(params, request)
               payload_type = params[:payload][:type]
-              callback_id = params[:payload][:callback_id]
+              callback_id = params[:payload][:callback_id].presence || params[:payload][:view][:callback_id]
               action_ids = params[:payload].fetch(:actions, []).map { |entity| entity[:action_id] }
               SlackRubyBotServer::Events.config.run_callbacks(
                 :action,
