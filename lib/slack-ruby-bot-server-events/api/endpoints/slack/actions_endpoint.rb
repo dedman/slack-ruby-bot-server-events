@@ -5,7 +5,7 @@ module SlackRubyBotServer
     module Api
       module Endpoints
         module Slack
-          class ActionsEndpoint
+          class ActionsEndpoint < Grape::API
             desc 'Respond to interactive slack buttons and actions.'
             params do
               requires :payload, type: JSON do
