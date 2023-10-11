@@ -29,7 +29,17 @@ module SlackRubyBotServer
         callbacks[key] << block
       end
 
+      def reload_callbacks_in_dev
+        if Rails.env.development?
+          SlackRubyBotServer::Events::Config.reset!
+          Dir[File.expand_path("#{Rails.root}/bot", __dir__) + '/**/*.rb'].sort.each do |file|
+            load file
+          end
+        end
+      end
+
       def run_callbacks(type, value, args)
+        reload_callbacks_in_dev
         callbacks = []
 
         keys = ([type.to_s] + Array(value)).compact
